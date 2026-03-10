@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌙 Belly Dance Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0906; color: #e8d5b5; font-family: 'Noto Serif JP', serif; min-height: 100vh; }
+    .app { min-height: 100vh; background: radial-gradient(ellipse at top, #2a1505 0%, #0f0906 60%); padding-bottom: 80px; }
+    .header { text-align: center; padding: 36px 20px 20px; position: relative; overflow: hidden; }
+    .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #c9a96e, #e8c07a, #c9a96e, transparent); }
+    .header-title { font-family: 'Cinzel', serif; font-size: clamp(1.4rem, 4vw, 2.2rem); color: #e8c07a; letter-spacing: 0.08em; text-shadow: 0 0 30px #c9a96e66; }
+    .header-sub { font-size: 0.8rem; color: #a07850; margin-top: 4px; letter-spacing: 0.15em; }
+    .tabs { display: flex; justify-content: center; gap: 0; padding: 0 16px; border-bottom: 1px solid #3a2510; overflow-x: auto; scrollbar-width: none; position: sticky; top: 0; z-index: 100; background: #0f0906; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn { background: none; border: none; color: #7a5835; font-family: 'Noto Serif JP', serif; font-size: clamp(0.72rem, 2vw, 0.88rem); padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s; }
+    .tab-btn:hover { color: #c9a96e; }
+    .tab-btn.active { color: #e8c07a; border-bottom-color: #c9a96e; }
+    .section { padding: 20px 16px; max-width: 800px; margin: 0 auto; display: none !important; }
+    .section.active { display: block !important; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 180px; background: #1e1008; border: 1px solid #3a2510; color: #e8d5b5; padding: 8px 14px; border-radius: 8px; font-family: 'Noto Serif JP', serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    .search-input:focus { border-color: #c9a96e; }
+    .search-input::placeholder { color: #5a3820; }
+    .filter-btn { background: #1e1008; border: 1px solid #3a2510; color: #a07850; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: 'Noto Serif JP', serif; font-size: 0.82rem; transition: all 0.2s; }
+    .filter-btn:hover { border-color: #c9a96e; color: #c9a96e; }
+    .filter-btn.active { background: #c9a96e; color: #1a0e05; border-color: #c9a96e; }
+    .add-btn { background: linear-gradient(135deg, #c9a96e, #a07840); border: none; color: #1a0e05; font-weight: 500; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-family: 'Noto Serif JP', serif; font-size: 0.88rem; white-space: nowrap; transition: opacity 0.2s; }
+    .add-btn:hover { opacity: 0.85; }
+    .form-card { background: #1a0d04; border: 1px solid #3a2510; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-title { font-size: 1rem; color: #c9a96e; margin-bottom: 16px; font-weight: 500; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } .form-group.full { grid-column: 1; } }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.78rem; color: #a07850; letter-spacing: 0.05em; }
+    input, select, textarea { background: #0f0906; border: 1px solid #3a2510; color: #e8d5b5; padding: 8px 12px; border-radius: 6px; font-family: 'Noto Serif JP', serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; width: 100%; }
+    input:focus, select:focus, textarea:focus { border-color: #c9a96e; }
+    textarea { resize: vertical; }
+    select option { background: #1a0d04; }
+    .save-btn { background: linear-gradient(135deg, #c9a96e, #a07840); border: none; color: #1a0e05; font-weight: 600; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Noto Serif JP', serif; }
+    .cancel-btn { background: none; border: 1px solid #3a2510; color: #7a5835; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Noto Serif JP', serif; }
+    .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+    .cards { display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #160b03; border: 1px solid #2a1a08; border-radius: 12px; padding: 16px; transition: border-color 0.2s; }
+    .card:hover { border-color: #3a2510; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; margin-bottom: 6px; font-weight: 500; letter-spacing: 0.05em; }
+    .card-title { font-size: 1rem; color: #e8c07a; font-weight: 500; line-height: 1.4; }
+    .card-date { font-size: 0.8rem; color: #7a5835; margin-top: 3px; }
+    .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .icon-btn { background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 0.9rem; transition: background 0.2s; opacity: 0.7; }
+    .icon-btn:hover { background: #2a1508; opacity: 1; }
+    .card-details { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: #8a6840; margin-bottom: 8px; }
+    .card-notes { font-size: 0.85rem; color: #9a7850; line-height: 1.6; white-space: pre-wrap; }
+    .steps-text { font-family: 'Noto Serif JP', serif; font-size: 0.85rem; color: #b09060; background: #0f0906; border: 1px solid #2a1508; border-radius: 8px; padding: 12px; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; overflow-x: auto; }
+    .tag { background: #2a1508; color: #a07850; border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; display: inline-block; margin: 2px; }
+    .check-btn { border: 1px solid; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-family: 'Noto Serif JP', serif; font-size: 0.82rem; transition: all 0.2s; }
+    .empty { text-align: center; color: #5a3820; padding: 40px; font-size: 0.9rem; }
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .summary-bar { background: #1a0d04; border: 1px solid #2a1a08; border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.82rem; color: #a07850; }
+    .feedback-label { font-size: 0.75rem; color: #c9a96e; margin-bottom: 3px; margin-top: 10px; }
+    .selfnote-label { font-size: 0.75rem; color: #9b7ec9; margin-bottom: 3px; margin-top: 10px; }
+    mark { background: #c9a96e44; color: #c9a96e; border-radius: 2px; }
+    .hidden { display: none; }
+    .multiselect-box { background: #0f0906; border: 1px solid #3a2510; border-radius: 6px; padding: 8px; max-height: 130px; overflow-y: auto; }
+    .multiselect-box label { display: flex; align-items: center; gap: 8px; padding: 5px 2px; cursor: pointer; color: #e8d5b5; font-size: 0.88rem; letter-spacing: 0; }
+    .multiselect-box input[type=checkbox] { width: auto; accent-color: #c9a96e; flex-shrink: 0; }
+    .stage-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    #tab-dashboard { padding-top: 16px; }
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 500px) { .dash-grid { grid-template-columns: 1fr; } }
+    .dash-card { background: #160b03; border: 1px solid #2a1a08; border-radius: 12px; padding: 16px; }
+    .dash-card-title { font-size: 0.75rem; color: #a07850; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .dash-card-value { font-size: 1.6rem; color: #e8c07a; font-family: 'Cinzel', serif; }
+    .dash-card-sub { font-size: 0.78rem; color: #5a3820; margin-top: 4px; }
+    .dash-section-title { font-size: 0.82rem; color: #c9a96e; letter-spacing: 0.1em; margin: 20px 0 10px; border-bottom: 1px solid #2a1508; padding-bottom: 6px; }
+    .dash-item { background: #160b03; border: 1px solid #2a1a08; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; transition: border-color 0.2s; }
+    .dash-item:hover { border-color: #3a2510; }
+    .dash-item-left { flex: 1; }
+    .dash-item-title { font-size: 0.9rem; color: #e8c07a; }
+    .dash-item-sub { font-size: 0.78rem; color: #7a5835; margin-top: 3px; }
+    .dash-item-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .copy-btn { background: #2a1508; border: 1px solid #3a2510; color: #c9a96e; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.78rem; transition: all 0.2s; white-space: nowrap; }
+    .copy-btn:hover { background: #3a2010; }
+    .copy-btn.copied { background: #2a4a1a; border-color: #7eb87e; color: #7eb87e; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-title">🌙 Belly Dance Manager</div>
+    <div class="header-sub">ベリーダンス管理ツール</div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button onclick="exportData()" style="background:none;border:1px solid #3a2510;color:#a07850;padding:5px 14px;border-radius:20px;cursor:pointer;font-family:inherit;font-size:0.78rem;transition:all 0.2s" onmouseover="this.style.borderColor='#c9a96e';this.style.color='#c9a96e'" onmouseout="this.style.borderColor='#3a2510';this.style.color='#a07850'">📤 データをエクスポート</button>
+      <label style="background:none;border:1px solid #3a2510;color:#a07850;padding:5px 14px;border-radius:20px;cursor:pointer;font-family:inherit;font-size:0.78rem;transition:all 0.2s" onmouseover="this.style.borderColor='#c9a96e';this.style.color='#c9a96e'" onmouseout="this.style.borderColor='#3a2510';this.style.color='#a07850'">📥 データをインポート<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard', this)">🏠 ホーム</button>
+    <button class="tab-btn" onclick="switchTab('stages', this)">🎭 ステージ</button>
+    <button class="tab-btn" onclick="switchTab('customers', this)">🎟️ 観客管理</button>
+    <button class="tab-btn" onclick="switchTab('choreo', this)">💃 振り付け</button>
+    <button class="tab-btn" onclick="switchTab('lessons', this)">📖 レッスンメモ</button>
+    <button class="tab-btn" onclick="switchTab('practice', this)">🏠 練習場所</button>
+    <button class="tab-btn" onclick="switchTab('schedule', this)">📋 レッスン予定</button>
+    <button class="tab-btn" onclick="switchTab('templates', this)">💬 テンプレ</button>
+  </div><!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section active">
+    <div id="dashboard-content"></div>
+  </div><!-- STAGES -->
+  <div id="tab-stages" class="section">
+    <div class="section-header">
+      <div class="filter-row" id="stage-filters">
+        <button class="filter-btn active" onclick="setStageFilter('全て')">全て</button>
+        <button class="filter-btn" onclick="setStageFilter('予定')">予定</button>
+        <button class="filter-btn" onclick="setStageFilter('完了')">完了</button>
+        <button class="filter-btn" onclick="setStageFilter('キャンセル')">キャンセル</button>
+      </div>
+      <button class="add-btn" onclick="toggleForm('stage-form')">+ 追加</button>
+    </div>
+    <div id="stage-form" class="form-card hidden">
+      <h3 class="form-title">🎭 新しいステージ</h3>
+      <div class="form-grid">
+        <div class="form-group full"><label>タイトル *</label><input id="s-title" placeholder="イベント名"></div>
+        <div class="form-group"><label>日付 *</label><input id="s-date" type="date"></div>
+        <div class="form-group"><label>ステータス</label><select id="s-status"><option>予定</option><option>完了</option><option>キャンセル</option></select></div>
+        <div class="form-group"><label>ショー区分</label><select id="s-category"><option value="">未設定</option><option>ショー</option><option>ハフラ</option><option>コンペ</option><option>その他</option></select></div>
+        <div class="form-group full"><label>会場</label><input id="s-venue" placeholder="会場名・場所"></div>
+        <div class="form-group"><label>開場時間</label><input id="s-open-time" type="time"></div>
+        <div class="form-group"><label>開演時間</label><input id="s-start-time" type="time"></div>
+        <div class="form-group full"><label>曲目・振り付け <small style="color:#a07850">（複数選択可）</small></label><div class="multiselect-box" id="s-choreo-box"><p style="color:#5a3820;font-size:0.82rem;padding:4px">振り付けを先に登録してください</p></div></div>
+        <div class="form-group full"><label>メモ</label><textarea id="s-notes" rows="3" placeholder="セトリ・注意事項など"></textarea></div>
+        <div class="form-group full">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <label>告知文</label>
+            <button type="button" onclick="generateAnnounce()" style="background:none;border:1px solid #3a2510;color:#a07850;padding:3px 10px;border-radius:12px;cursor:pointer;font-family:inherit;font-size:0.75rem;transition:all 0.2s" onmouseover="this.style.borderColor='#c9a96e';this.style.color='#c9a96e'" onmouseout="this.style.borderColor='#3a2510';this.style.color='#a07850'">✨ 自動生成</button>
+          </div>
+          <textarea id="s-announce" rows="6" placeholder="SNS等に使う告知文...&#10;&#10;右上の「自動生成」ボタンで入力済みの情報から自動作成できます"></textarea>
+        </div>
+        <div class="form-group full"><label>フライヤー画像</label><input type="file" id="s-flyer" accept="image/*" onchange="previewFlyer(event)" style="padding:6px"><div id="s-flyer-preview" style="margin-top:8px"></div></div>
+      </div>
+      <div class="btn-row">
+        <button class="cancel-btn" onclick="cancelForm('stage-form', resetStageForm)">キャンセル</button>
+        <button class="save-btn" onclick="saveStage()">保存</button>
+      </div>
+      <input type="hidden" id="s-editing">
+    </div>
+    <div id="stage-cards" class="cards"></div>
+  </div><!-- CUSTOMERS -->
+  <div id="tab-customers" class="section">
+    <div class="section-header">
+      <input class="search-input" placeholder="🔍 名前で検索" oninput="renderCustomers()" id="c-search" style="min-width:120px">
+      <button class="add-btn" onclick="toggleForm('customer-form')">+ 追加</button>
+    </div>
+    <div id="customer-stage-filters" class="filter-row"></div>
+    <div id="customer-summary" class="summary-bar hidden"></div>
+    <div id="customer-form" class="form-card hidden">
+      <h3 class="form-title">🎟️ 新しい観客</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>お名前 *</label><input id="c-name" placeholder="山田 花子"></div>
+        <div class="form-group"><label>人数</label><input id="c-count" type="number" min="1" value="1"></div>
+        <div class="form-group full"><label>同行者</label><input id="c-companion" placeholder="山田太郎、鈴木花子..."></div>
+        <div class="form-group full"><label>連絡手段</label><select id="c-contact-method"><option value="">未設定</option><option>LINE</option><option>Instagram DM</option><option>メール</option><option>電話</option><option>その他</option></select></div>
+        <div class="form-group full"><label>観に来るショー</label><select id="c-stage"><option value="">未設定</option></select></div>
+        <div class="form-group full"><label>メモ</label><textarea id="c-notes" rows="2" placeholder="席の希望・招待経緯など"></textarea></div>
+      </div>
+      <div class="btn-row">
+        <button class="cancel-btn" onclick="cancelForm('customer-form', resetCustomerForm)">キャンセル</button>
+        <button class="save-btn" onclick="saveCustomer()">保存</button>
+      </div>
+      <input type="hidden" id="c-editing">
+    </div>
+    <div id="customer-cards" class="cards"></div>
+  </div><!-- CHOREO -->
+  <div id="tab-choreo" class="section">
+    <div class="section-header">
+      <input class="search-input" placeholder="🔍 タイトル・曲名・振り付けで検索" oninput="renderChoreos()" id="ch-search">
+      <button class="add-btn" onclick="toggleForm('choreo-form')">+ 追加</button>
+    </div>
+    <div id="choreo-form" class="form-card hidden">
+      <h3 class="form-title">💃 新しい振り付け</h3>
+      <div class="form-grid">
+        <div class="form-group full"><label>タイトル *</label><input id="ch-title" placeholder="作品名・振り付け名"></div>
+        <div class="form-group"><label>曲名</label><input id="ch-music" placeholder="使用曲"></div>
+        <div class="form-group"><label>クラス名</label><input id="ch-class" placeholder="木曜クラス..."></div>
+        <div class="form-group"><label>作成日</label><input id="ch-date" type="date"></div>
+        <div class="form-group full"><label>披露の場 <small style="color:#a07850">（複数選択可）</small></label><div class="multiselect-box" id="ch-stages-box"><p style="color:#5a3820;font-size:0.82rem;padding:4px">ステージを先に登録してください</p></div></div>
+        <div class="form-group full"><label>振り付けメモ</label><textarea id="ch-steps" rows="6" placeholder="例:&#10;イントロ: ウォーク8拍 → ヒップドロップ4回&#10;Aメロ: シミー + アームムーブ..."></textarea></div>
+        <div class="form-group full">
+          <label>🗺️ フォーメーション</label>
+          <textarea id="ch-formation" rows="3" placeholder="立ち位置・移動・隊形変化など..."></textarea>
+          <div style="margin-top:8px">
+            <label style="display:inline-block;background:#1a0e05;border:1px solid #3a2510;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.85rem;color:#c9a96e">
+              📷 写真を追加（複数可）
+              <input type="file" id="ch-formation-photos" accept="image/*" multiple onchange="addFormationPhotos(event)" style="display:none">
+            </label>
+          </div>
+          <div id="ch-formation-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+        </div>
+        <div class="form-group full"><label>その他メモ</label><textarea id="ch-notes" rows="3" placeholder="衣装・小道具・注意点など"></textarea></div>
+        <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="ch-ongoing" style="width:auto;accent-color:#c9a96e"> <span style="color:#e8d5b5;font-size:0.9rem">🔥 On Going（現在練習中）</span></label></div>
+      </div>
+      <div class="btn-row">
+        <button class="cancel-btn" onclick="cancelForm('choreo-form', resetChoreoForm)">キャンセル</button>
+        <button class="save-btn" onclick="saveChoreo()">保存</button>
+      </div>
+      <input type="hidden" id="ch-editing">
+    </div>
+    <div id="choreo-cards" class="cards"></div>
+  </div><!-- LESSONS -->
+  <div id="tab-lessons" class="section">
+    <div class="section-header">
+      <input class="search-input" placeholder="🔍 技名・内容で検索" oninput="renderLessons()" id="l-search">
+      <button class="add-btn" onclick="toggleForm('lesson-form')">+ 追加</button>
+    </div>
+    <div id="lesson-form" class="form-card hidden">
+      <h3 class="form-title">📖 新しいレッスンメモ</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>日付 *</label><input id="l-date" type="date"></div>
+        <div class="form-group"><label>クラス・場所</label><input id="l-cls" placeholder="〇〇スタジオ / 木曜クラス"></div>
+        <div class="form-group full"><label>練習した技 <small style="color:#a07850">（検索キーワードになります）</small></label><input id="l-techniques" placeholder="シミー, ヒップドロップ, マヤ, ターン..."></div>
+        <div class="form-group full"><label>🎤 先生からのフィードバック・アドバイス</label><textarea id="l-feedback" rows="4" placeholder="先生に言われたこと、アドバイス..."></textarea></div>
+        <div class="form-group full"><label>💭 自分の気づき・反省</label><textarea id="l-selfnote" rows="3" placeholder="自分が感じたこと、できたこと、できなかったこと..."></textarea></div>
+      </div>
+      <div class="btn-row">
+        <button class="cancel-btn" onclick="cancelForm('lesson-form', resetLessonForm)">キャンセル</button>
+        <button class="save-btn" onclick="saveLesson()">保存</button>
+      </div>
+      <input type="hidden" id="l-editing">
+    </div>
+    <div id="search-result-label" style="color:#a07850;font-size:0.85em;margin-bottom:12px;display:none"></div>
+    <div id="lesson-cards" class="cards"></div>
+  </div><!-- PRACTICE -->
+  <div id="tab-practice" class="section">
+    <div class="section-header">
+      <div style="font-size:0.82rem;color:#a07850" id="practice-summary-inline"></div>
+      <button class="add-btn" onclick="toggleForm('practice-form')">+ 追加</button>
+    </div>
+    <div class="filter-row" id="practice-filters">
+      <button class="filter-btn active" style="background:#c9a96e;color:#1a0e05" onclick="setPracticeFilter('全て')">全て</button>
+      <button class="filter-btn" onclick="setPracticeFilter('予定')">予定</button>
+      <button class="filter-btn" onclick="setPracticeFilter('完了')">完了</button>
+      <button class="filter-btn" onclick="setPracticeFilter('キャンセル')">キャンセル</button>
+    </div>
+    <div id="practice-form" class="form-card hidden">
+      <h3 class="form-title">🏠 新しい練習場所</h3>
+      <div class="form-grid">
+        <div class="form-group full"><label>練習場所 *</label><input id="p-place" placeholder="スタジオ名・場所"></div>
+        <div class="form-group"><label>日付 *</label><input id="p-date" type="date"></div>
+        <div class="form-group"><label>時間</label><input id="p-time" placeholder="13:00〜15:00"></div>
+        <div class="form-group full"><label>予約アカウント</label><select id="p-account"><option value="">未選択</option><option value="87183 そのひぐらし">87183 そのひぐらし</option><option value="87356 SDM">87356 SDM</option><option value="88597 7Rings">88597 7Rings</option><option value="89837 No category">89837 No category</option></select></div>
+        <div class="form-group"><label>料金（円）</label><input id="p-fee" type="number" min="0" placeholder="3000"></div>
+        <div class="form-group"><label>ステータス</label><select id="p-status"><option>予定</option><option>完了</option><option>キャンセル</option></select></div>
+      </div>
+      <div class="btn-row" style="margin-bottom:12px">
+        <button class="cancel-btn" onclick="cancelForm('practice-form', resetPracticeForm)">キャンセル</button>
+        <button class="save-btn" onclick="savePractice()">保存</button>
+      </div>
+      <input type="hidden" id="p-editing">
+    </div>
+    <div id="practice-cards" class="cards"></div>
+  </div><!-- SCHEDULE -->
+  <div id="tab-schedule" class="section">
+    <div class="section-header">
+      <h2 style="color:#c9a96e;font-size:0.95rem;font-weight:500">レッスンスケジュール</h2>
+      <label class="add-btn" style="cursor:pointer">+ 画像追加<input type="file" accept="image/*" multiple onchange="addSchedulePDFs(event)" style="display:none"></label>
+    </div>
+    <p style="font-size:0.8rem;color:#5a3820;margin-bottom:16px">画像を追加するとここに一覧表示されます。複数枚まとめて追加できます。</p>
+    <div id="schedule-cards" class="cards"></div>
+  </div>
+
+</div><!-- TEMPLATES -->
+  <div id="tab-templates" class="section">
+    <div class="section-header">
+      <h2 style="color:#c9a96e;font-size:0.95rem;font-weight:500">💬 メッセージテンプレート</h2>
+      <button class="add-btn" id="template-add-btn" onclick="toggleTemplateForm()">+ 追加</button>
+    </div>
+    <div id="template-form" class="form-card hidden">
+      <h3 class="form-title">💬 新しいテンプレート</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>タイトル *</label><input id="t-title" placeholder="前日リマインド用"></div>
+        <div class="form-group"><label>カテゴリ</label><select id="t-category"><option value="">未設定</option><option>前日リマインド</option><option>当日お礼</option><option>告知</option><option>その他</option></select></div>
+        <div class="form-group full"><label>メッセージ本文 *</label><textarea id="t-body" rows="6" placeholder="明日はよろしくお願いします！&#10;&#10;【公演情報】&#10;日時: &#10;場所: "></textarea></div>
+        <div class="form-group full"><label>メモ</label><input id="t-notes" placeholder="使用シーン・注意点など"></div>
+      </div>
+      <div class="btn-row">
+        <button class="cancel-btn" onclick="toggleTemplateForm(); resetTemplateForm();">キャンセル</button>
+        <button class="save-btn" onclick="saveTemplate()">保存</button>
+      </div>
+      <input type="hidden" id="t-editing">
+    </div>
+    <p style="font-size:0.8rem;color:#5a3820;margin-bottom:16px">「コピー」ボタンでクリップボードに貼り付けられます</p>
+    <div id="template-cards" class="cards"></div>
+  </div>
+
+
+<!-- CHOREO VIEW MODAL -->
+<div id="choreo-view-modal" onclick="if(event.target===this)closeChoreoView()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000cc;z-index:9999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#160b03;border:1px solid #3a2510;border-radius:16px;width:100%;max-width:600px;padding:20px;margin-top:40px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 id="choreo-view-title" style="color:#e8c07a;font-size:1.1rem;font-weight:500;flex:1"></h2>
+      <div style="display:flex;gap:8px">
+        <button id="choreo-view-edit-btn" style="background:none;border:1px solid #3a2510;color:#a07850;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.82rem">✏️ 編集</button>
+        <button onclick="closeChoreoView()" style="background:none;border:none;color:#7a5835;font-size:1.2rem;cursor:pointer;padding:0 4px">✕</button>
+      </div>
+    </div>
+    <div id="choreo-view-body"></div>
+  </div>
+</div>
+
+<!-- IMAGE MODAL -->
+<div id="img-modal" onclick="closeImageModal()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000cc;z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <img id="img-modal-src" style="max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain">
+</div>
+
+<div id="formation-photo-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000cc;z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <img id="formation-photo-modal-src" style="max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain">
+</div>
+
+<script>
+const KEYS = { stages: 'bd_stages', customers: 'bd_customers', choreo: 'bd_choreography', lessons: 'bd_lessons', practice: 'bd_practice', schedule: 'bd_schedule', templates: 'bd_templates' };
+const load = k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
+const save = (k, d) => localStorage.setItem(k, JSON.stringify(d));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
+
+let stageFilter = '全て';
+let customerStageFilter = '全て';
+let practiceFilter = '全て';
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'customers') { populateCustomerStageSelect(); renderCustomers(); }
+  if (id === 'stages') { renderStages(); populateStageChoreosBox([]); }
+  if (id === 'choreo') { populateChoreoStagesBox([]); renderChoreos(); }
+  if (id === 'lessons') renderLessons();
+  if (id === 'practice') renderPractice();
+  if (id === 'schedule') renderSchedule();
+  if (id === 'templates') renderTemplates();
+  if (id === 'dashboard') renderDashboard();
+}
+
+function toggleForm(id) { document.getElementById(id).classList.toggle('hidden'); }
+function cancelForm(id, fn) { document.getElementById(id).classList.add('hidden'); fn(); }
+
+// ---- STAGES ----
+function setStageFilter(f) {
+  stageFilter = f;
+  const colors = { '予定': '#c9a96e', '完了': '#7eb87e', 'キャンセル': '#c97070' };
+  document.querySelectorAll('#stage-filters .filter-btn').forEach(b => {
+    const active = b.textContent === f;
+    b.classList.toggle('active', active);
+    b.style.background = active ? (colors[f] || '#c9a96e') : '';
+    b.style.color = active ? '#1a0e05' : '';
+  });
+  renderStages();
+}
+
+
+// ---- STAGE CHOREO MULTISELECT ----
+function populateStageChoreosBox(selectedIds) {
+  const choreos = load(KEYS.choreo);
+  const box = document.getElementById('s-choreo-box');
+  if (!choreos.length) { box.innerHTML = '<p style="color:#5a3820;font-size:0.82rem;padding:4px">振り付けを先に登録してください</p>'; return; }
+  box.innerHTML = choreos.map(c => `<label><input type="checkbox" value="${c.id}" ${selectedIds.includes(c.id)?'checked':''}> ${esc(c.title)}${c.music ? ' — ' + esc(c.music) : ''}</label>`).join('');
+}
+
+function getSelectedStageChoreoIds() {
+  return Array.from(document.querySelectorAll('#s-choreo-box input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+// ---- AUTO GENERATE ANNOUNCE ----
+function generateAnnounce() {
+  const title = document.getElementById('s-title').value.trim();
+  const date = document.getElementById('s-date').value;
+  const venue = document.getElementById('s-venue').value.trim();
+  const openTime = document.getElementById('s-open-time').value;
+  const startTime = document.getElementById('s-start-time').value;
+
+  if (!title && !date && !venue) { alert('イベント名・日付・会場を入力してから生成してください'); return; }
+
+  const fmtDate = d => {
+    if (!d) return '';
+    const dt = new Date(d);
+    const days = ['日','月','火','水','木','金','土'];
+    return `${dt.getFullYear()}年${dt.getMonth()+1}月${dt.getDate()}日（${days[dt.getDay()]}）`;
+  };
+
+  let text = '';
+  if (title) text += `【${title}】
+
+`;
+  if (date) text += `📅 ${fmtDate(date)}
+`;
+  if (openTime || startTime) {
+    if (openTime) text += `🚪 開場 ${openTime}
+`;
+    if (startTime) text += `🎬 開演 ${startTime}
+`;
+  }
+  if (venue) text += `📍 ${venue}
+`;
+
+  document.getElementById('s-announce').value = text.trimEnd();
+}
+
+function resetStageForm() {
+  ['s-title','s-date','s-venue','s-open-time','s-start-time','s-notes','s-announce'].forEach(id => document.getElementById(id).value = '');
+  populateStageChoreosBox([]);
+  document.getElementById('s-category').value = '';
+  document.getElementById('s-flyer-preview').innerHTML = '';
+  document.getElementById('s-flyer').value = '';
+  document.getElementById('s-status').value = '予定';
+  document.getElementById('s-editing').value = '';
+  document.querySelector('#stage-form .form-title').textContent = '🎭 新しいステージ';
+  document.querySelector('#stage-form .save-btn').textContent = '保存';
+}
+
+function saveStage() {
+  const title = document.getElementById('s-title').value.trim();
+  const date = document.getElementById('s-date').value;
+  if (!title || !date) { alert('タイトルと日付は必須です'); return; }
+  const stages = load(KEYS.stages);
+  const editingId = document.getElementById('s-editing').value;
+  const editingStage = editingId ? load(KEYS.stages).find(s => s.id === editingId) : null;
+  const item = { id: editingId || uid(), title, date, status: document.getElementById('s-status').value, category: document.getElementById('s-category').value, venue: document.getElementById('s-venue').value, openTime: document.getElementById('s-open-time').value, startTime: document.getElementById('s-start-time').value, choreoIds: getSelectedStageChoreoIds(), notes: document.getElementById('s-notes').value, announce: document.getElementById('s-announce').value, flyer: window._pendingFlyer !== undefined ? window._pendingFlyer : (editingStage ? editingStage.flyer : null) };
+  window._pendingFlyer = undefined;
+  if (editingId) { const i = stages.findIndex(s => s.id === editingId); if (i > -1) stages[i] = item; }
+  else stages.unshift(item);
+  save(KEYS.stages, stages);
+  document.getElementById('stage-form').classList.add('hidden');
+  resetStageForm();
+  renderStages();
+}
+
+function editStage(id) {
+  const s = load(KEYS.stages).find(x => x.id === id); if (!s) return;
+  document.getElementById('s-title').value = s.title;
+  document.getElementById('s-date').value = s.date;
+  document.getElementById('s-status').value = s.status;
+  document.getElementById('s-category').value = s.category || '';
+  document.getElementById('s-venue').value = s.venue || '';
+  document.getElementById('s-open-time').value = s.openTime || '';
+  document.getElementById('s-start-time').value = s.startTime || '';
+  populateStageChoreosBox(s.choreoIds || []);
+  document.getElementById('s-notes').value = s.notes || '';
+  document.getElementById('s-announce').value = s.announce || '';
+  document.getElementById('s-flyer-preview').innerHTML = s.flyer ? `<img src="${s.flyer}" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:4px"><br><button onclick="window._pendingFlyer=null;document.getElementById('s-flyer-preview').innerHTML='';" style="font-size:0.75rem;color:#c97070;background:none;border:none;cursor:pointer;margin-top:4px">🗑️ 画像を削除</button>` : '';
+  document.getElementById('s-editing').value = id;
+  document.querySelector('#stage-form .form-title').textContent = '✏️ 編集';
+  document.querySelector('#stage-form .save-btn').textContent = '更新';
+  document.getElementById('stage-form').classList.remove('hidden');
+  document.getElementById('stage-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteStage(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.stages, load(KEYS.stages).filter(s => s.id !== id));
+  renderStages();
+}
+
+function renderStages() {
+  const stages = load(KEYS.stages);
+  const filtered = (stageFilter === '全て' ? stages : stages.filter(s => s.status === stageFilter)).sort((a,b) => new Date(b.date)-new Date(a.date));
+  const colors = { '予定': '#c9a96e', '完了': '#7eb87e', 'キャンセル': '#c97070' };
+  const el = document.getElementById('stage-cards');
+  if (!filtered.length) { el.innerHTML = '<div class="empty">ステージ情報がありません</div>'; return; }
+  el.innerHTML = filtered.map(s => `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <span class="badge" style="background:${colors[s.status]||'#c9a96e'};color:#1a0e05">${s.status}</span>${s.category ? `<span class="badge" style="background:#3a2a50;color:#c9a0e8;margin-left:4px">${s.category}</span>` : ''}
+          <h3 class="card-title">${esc(s.title)}</h3>
+          <p class="card-date">📅 ${s.date}</p>
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editStage('${s.id}')">✏️</button>
+          <button class="icon-btn" onclick="deleteStage('${s.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="card-details">
+        ${s.venue ? `<span>📍 ${esc(s.venue)}</span>` : ''}
+        ${s.openTime ? `<span>🚪 開場 ${s.openTime}</span>` : ''}
+        ${s.startTime ? `<span>🎬 開演 ${s.startTime}</span>` : ''}
+        ${(s.choreoIds||[]).length ? `<span>💃 ${(s.choreoIds||[]).map(id => { const c = load(KEYS.choreo).find(x=>x.id===id); return c ? esc(c.title) : ''; }).filter(Boolean).join(' / ')}</span>` : ''}
+      </div>
+      ${s.announce ? `<div style="margin-top:10px"><p style="font-size:0.75rem;color:#c9a96e;margin-bottom:3px">📢 告知文</p><p class="card-notes" style="color:#b09060">${esc(s.announce)}</p></div>` : ''}
+      ${s.flyer ? `<div style="margin-top:10px"><img src="${s.flyer}" style="max-width:100%;max-height:220px;border-radius:8px;object-fit:cover"><br><a href="${s.flyer}" download="flyer-${esc(s.title)}.jpg" style="display:inline-block;margin-top:6px;font-size:0.78rem;color:#c9a96e;text-decoration:none;border:1px solid #c9a96e44;padding:3px 10px;border-radius:20px">⬇️ フライヤーをダウンロード</a></div>` : ''}
+    </div>`).join('');
+}
+
+// ---- CUSTOMERS ----
+function populateCustomerStageSelect() {
+  const stages = load(KEYS.stages);
+  document.getElementById('c-stage').innerHTML = '<option value="">未設定</option>' + stages.map(s => `<option value="${s.id}">${esc(s.title)}（${s.date}）</option>`).join('');
+}
+
+function resetCustomerForm() {
+  ['c-name','c-companion','c-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('c-count').value = '1';
+  document.getElementById('c-contact-method').value = '';
+  document.getElementById('c-stage').value = '';
+  document.getElementById('c-editing').value = '';
+  document.querySelector('#customer-form .form-title').textContent = '🎟️ 新しい観客';
+  document.querySelector('#customer-form .save-btn').textContent = '保存';
+}
+
+function saveCustomer() {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { alert('お名前は必須です'); return; }
+  const customers = load(KEYS.customers);
+  const editingId = document.getElementById('c-editing').value;
+  const existing = editingId ? customers.find(c => c.id === editingId) : null;
+  const item = { id: editingId || uid(), name, count: parseInt(document.getElementById('c-count').value)||1, companion: document.getElementById('c-companion').value, contactMethod: document.getElementById('c-contact-method').value, stageId: document.getElementById('c-stage').value, notes: document.getElementById('c-notes').value, reminderSent: existing ? existing.reminderSent : false, thanksSent: existing ? existing.thanksSent : false };
+  if (editingId) { const i = customers.findIndex(c => c.id === editingId); if (i > -1) customers[i] = item; }
+  else customers.unshift(item);
+  save(KEYS.customers, customers);
+  document.getElementById('customer-form').classList.add('hidden');
+  resetCustomerForm();
+  renderCustomers();
+}
+
+function editCustomer(id) {
+  const c = load(KEYS.customers).find(x => x.id === id); if (!c) return;
+  populateCustomerStageSelect();
+  document.getElementById('c-name').value = c.name;
+  document.getElementById('c-count').value = c.count || 1;
+  document.getElementById('c-companion').value = c.companion || '';
+  document.getElementById('c-contact-method').value = c.contactMethod || '';
+  document.getElementById('c-stage').value = c.stageId || '';
+  document.getElementById('c-notes').value = c.notes || '';
+  document.getElementById('c-editing').value = id;
+  document.querySelector('#customer-form .form-title').textContent = '✏️ 編集';
+  document.querySelector('#customer-form .save-btn').textContent = '更新';
+  document.getElementById('customer-form').classList.remove('hidden');
+  document.getElementById('customer-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteCustomer(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.customers, load(KEYS.customers).filter(c => c.id !== id));
+  renderCustomers();
+}
+
+function toggleCustomerField(id, field) {
+  const customers = load(KEYS.customers);
+  const i = customers.findIndex(c => c.id === id);
+  if (i > -1) { customers[i][field] = !customers[i][field]; save(KEYS.customers, customers); renderCustomers(); }
+}
+
+function setCustomerStageFilter(f) { customerStageFilter = f; renderCustomers(); }
+
+function renderCustomers() {
+  const customers = load(KEYS.customers);
+  const stages = load(KEYS.stages);
+  const search = document.getElementById('c-search').value;
+  const allStageIds = [...new Set(customers.map(c => c.stageId).filter(Boolean))];
+  document.getElementById('customer-stage-filters').innerHTML = ['全て', ...allStageIds].map(id => {
+    const label = id === '全て' ? '全て' : (stages.find(s => s.id === id)?.title || id);
+    const active = customerStageFilter === id;
+    return `<button class="filter-btn${active?' active':''}" style="${active?'background:#c9a96e;color:#1a0e05':''}" onclick="setCustomerStageFilter('${id}')">${esc(label)}</button>`;
+  }).join('');
+
+  const filtered = customers.filter(c => {
+    const ms = !search || c.name.includes(search) || (c.companion||'').includes(search) || (c.notes||'').includes(search);
+    return ms && (customerStageFilter === '全て' || c.stageId === customerStageFilter);
+  });
+
+  const totalPeople = filtered.reduce((sum, c) => sum + (c.count || 1), 0);
+  const summary = document.getElementById('customer-summary');
+  if (filtered.length) {
+    summary.classList.remove('hidden');
+    summary.innerHTML = `<span>👥 ${filtered.length}組 / ${totalPeople}名</span><span>📩 リマインド済: ${filtered.filter(c=>c.reminderSent).length}組</span><span>💛 お礼済: ${filtered.filter(c=>c.thanksSent).length}組</span><span>✅ 完了: ${filtered.filter(c=>c.reminderSent&&c.thanksSent).length}組</span>`;
+  } else summary.classList.add('hidden');
+
+  const el = document.getElementById('customer-cards');
+  if (!filtered.length) { el.innerHTML = '<div class="empty">観客情報がありません</div>'; return; }
+  el.innerHTML = filtered.map(c => {
+    const stage = stages.find(s => s.id === c.stageId);
+    const done = c.reminderSent && c.thanksSent;
+    return `<div class="card" style="border-color:${done?'#3a5a2a':'#2a1a08'}">
+      <div class="card-top">
+        <div style="flex:1">
+          <h3 class="card-title">${esc(c.name)}${c.count > 1 ? ` <span style="color:#a07850;font-size:0.82em">（${c.count}名）</span>` : ''}</h3>
+          ${c.companion ? `<p class="card-date">👫 同行: ${esc(c.companion)}</p>` : ''}
+          ${c.contactMethod ? `<p class="card-date">📬 ${esc(c.contactMethod)}</p>` : ''}
+          ${stage ? `<p class="card-date">🎭 ${esc(stage.title)} <span style="color:#5a3820">(${stage.date})</span></p>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editCustomer('${c.id}')">✏️</button>
+          <button class="icon-btn" onclick="deleteCustomer('${c.id}')">🗑️</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="check-btn" style="background:${c.reminderSent?'#2a4a1a':'#1a1008'};border-color:${c.reminderSent?'#7eb87e':'#3a2510'};color:${c.reminderSent?'#7eb87e':'#7a5835'}" onclick="toggleCustomerField('${c.id}','reminderSent')">
+          ${c.reminderSent?'✅':'☐'} 前日リマインド
+        </button>
+        <button class="check-btn" style="background:${c.thanksSent?'#2a4a1a':'#1a1008'};border-color:${c.thanksSent?'#7eb87e':'#3a2510'};color:${c.thanksSent?'#7eb87e':'#7a5835'}" onclick="toggleCustomerField('${c.id}','thanksSent')">
+          ${c.thanksSent?'✅':'☐'} お礼LINE
+        </button>
+      </div>
+      ${c.notes ? `<p class="card-notes" style="margin-top:8px">${esc(c.notes)}</p>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ---- CHOREO ----
+function populateChoreoStagesBox(selectedIds) {
+  const stages = load(KEYS.stages);
+  const box = document.getElementById('ch-stages-box');
+  if (!stages.length) { box.innerHTML = '<p style="color:#5a3820;font-size:0.82rem;padding:4px">ステージを先に登録してください</p>'; return; }
+  box.innerHTML = stages.map(s => `<label><input type="checkbox" value="${s.id}" ${selectedIds.includes(s.id)?'checked':''}> ${esc(s.title)}（${s.date}）</label>`).join('');
+}
+
+function getSelectedStageIds() {
+  return Array.from(document.querySelectorAll('#ch-stages-box input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+function resetChoreoForm() {
+  ['ch-title','ch-music','ch-class','ch-date','ch-steps','ch-formation','ch-notes'].forEach(id => document.getElementById(id).value = '');
+  window._pendingFormationPhotos = [];
+  document.getElementById('ch-formation-photo-preview').innerHTML = '';
+  document.getElementById('ch-formation-photos').value = '';
+  document.getElementById('ch-ongoing').checked = false;
+  document.getElementById('ch-editing').value = '';
+  document.querySelector('#choreo-form .form-title').textContent = '💃 新しい振り付け';
+  document.querySelector('#choreo-form .save-btn').textContent = '保存';
+  populateChoreoStagesBox([]);
+}
+
+function saveChoreo() {
+  const title = document.getElementById('ch-title').value.trim();
+  if (!title) { alert('タイトルは必須です'); return; }
+  const choreos = load(KEYS.choreo);
+  const editingId = document.getElementById('ch-editing').value;
+  const editingChoreo = editingId ? load(KEYS.choreo).find(c => c.id === editingId) : null;
+  const formationPhotos = window._pendingFormationPhotos !== undefined ? window._pendingFormationPhotos : (editingChoreo ? (editingChoreo.formationPhotos || []) : []);
+  const item = { id: editingId || uid(), title, music: document.getElementById('ch-music').value, className: document.getElementById('ch-class').value, date: document.getElementById('ch-date').value, stageIds: getSelectedStageIds(), steps: document.getElementById('ch-steps').value, formation: document.getElementById('ch-formation').value, formationPhotos, notes: document.getElementById('ch-notes').value, ongoing: document.getElementById('ch-ongoing').checked };
+  window._pendingFormationPhotos = undefined;
+  if (editingId) { const i = choreos.findIndex(c => c.id === editingId); if (i > -1) choreos[i] = item; }
+  else choreos.unshift(item);
+  try {
+    save(KEYS.choreo, choreos);
+  } catch(e) {
+    alert('保存に失敗しました。写真のサイズが大きすぎる可能性があります。\n(' + e.message + ')');
+    return;
+  }
+  document.getElementById('choreo-form').classList.add('hidden');
+  resetChoreoForm();
+  renderChoreos();
+}
+
+function viewChoreo(id) {
+  const c = load(KEYS.choreo).find(x => x.id === id);
+  if (!c) return;
+  const stages = load(KEYS.stages);
+  const stageTags = (c.stageIds||[]).map(sid => { const s = stages.find(x=>x.id===sid); return s ? `<span class="tag">🎭 ${esc(s.title)}</span>` : ''; }).join('');
+  document.getElementById('choreo-view-title').textContent = c.title;
+  document.getElementById('choreo-view-body').innerHTML = `
+    ${c.music ? `<p class="card-date" style="margin-bottom:4px">🎵 ${esc(c.music)}</p>` : ''}
+    ${c.className ? `<p class="card-date" style="margin-bottom:4px">🏫 ${esc(c.className)}</p>` : ''}
+    ${c.date ? `<p class="card-date" style="margin-bottom:8px">📅 ${c.date}</p>` : ''}
+    ${c.ongoing ? `<span class="badge" style="background:#c9a96e33;color:#c9a96e;border:1px solid #c9a96e44;margin-bottom:8px;display:inline-block">🔥 ON GOING</span>` : ''}
+    ${stageTags ? `<div class="stage-tags" style="margin-bottom:10px">${stageTags}</div>` : ''}
+    ${c.steps ? `<pre class="steps-text">${esc(c.steps)}</pre>` : ''}
+    ${(c.formation || (c.formationPhotos && c.formationPhotos.length)) ? `<div style="margin-top:8px"><p style="font-size:0.75rem;color:#c9a96e;margin-bottom:4px">🗺️ フォーメーション</p>${c.formation ? `<pre class="steps-text">${esc(c.formation)}</pre>` : ''}${(c.formationPhotos||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${(c.formationPhotos||[]).map(src => `<img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #3a2510;cursor:pointer" onclick="openFormationPhoto(this.src)">`).join('')}</div>` : ''}</div>` : ''}
+    ${c.notes ? `<p class="card-notes">${esc(c.notes)}</p>` : ''}
+  `;
+  window._viewingChoreoId = id;
+  document.getElementById('choreo-view-edit-btn').onclick = () => { closeChoreoView(); editChoreo(id); };
+  window._viewingChoreoId = id;
+  document.getElementById('choreo-view-modal').style.display = 'flex';
+}
+function closeChoreoView() {
+  document.getElementById('choreo-view-modal').style.display = 'none';
+}
+
+function editChoreo(id) {
+  const c = load(KEYS.choreo).find(x => x.id === id); if (!c) return;
+  document.getElementById('ch-title').value = c.title;
+  document.getElementById('ch-music').value = c.music || '';
+  document.getElementById('ch-class').value = c.className || '';
+  document.getElementById('ch-date').value = c.date || '';
+  document.getElementById('ch-steps').value = c.steps || '';
+  document.getElementById('ch-formation').value = c.formation || '';
+  window._pendingFormationPhotos = (c.formationPhotos || []).slice();
+  renderFormationPhotoPreview();
+  window._pendingFormationPhotos = (c.formationPhotos || []).slice();
+  renderFormationPhotoPreview();
+  document.getElementById('ch-notes').value = c.notes || '';
+  document.getElementById('ch-ongoing').checked = c.ongoing || false;
+  document.getElementById('ch-editing').value = id;
+  populateChoreoStagesBox(c.stageIds || []);
+  document.querySelector('#choreo-form .form-title').textContent = '✏️ 編集';
+  document.querySelector('#choreo-form .save-btn').textContent = '更新';
+  document.getElementById('choreo-form').classList.remove('hidden');
+  document.getElementById('choreo-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteChoreo(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.choreo, load(KEYS.choreo).filter(c => c.id !== id));
+  renderChoreos();
+}
+
+function renderChoreos() {
+  const search = document.getElementById('ch-search').value;
+  const stages = load(KEYS.stages);
+  const allChoreos = load(KEYS.choreo);
+  const ongoings = allChoreos.filter(c => c.ongoing);
+  const choreos = allChoreos.filter(c => !search || c.title.includes(search) || (c.music||'').includes(search) || (c.steps||'').includes(search) || (c.className||'').includes(search));
+  const el = document.getElementById('choreo-cards');
+
+  // Ongoing banner at top
+  let bannerHtml = '';
+  if (ongoings.length && !search) {
+    bannerHtml = `<div style="background:#1a0d04;border:1px solid #c9a96e44;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+      <p style="font-size:0.75rem;color:#c9a96e;margin-bottom:8px;letter-spacing:0.08em">🔥 ON GOING</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${ongoings.map(c => `<span style="background:#c9a96e22;color:#e8c07a;border:1px solid #c9a96e44;border-radius:20px;padding:4px 12px;font-size:0.85rem;cursor:pointer" onclick="viewChoreo('${c.id}')">${esc(c.title)}</span>`).join('')}
+      </div>
+    </div>`;
+  }
+  document.getElementById('choreo-cards').insertAdjacentHTML !== undefined && (el.innerHTML = '');
+  if (!choreos.length) { el.innerHTML = bannerHtml + '<div class="empty">振り付けメモがありません</div>'; return; }
+  el.innerHTML = bannerHtml + choreos.map(c => {
+    const stageTags = (c.stageIds||[]).map(sid => { const s = stages.find(x => x.id === sid); return s ? `<span class="tag">🎭 ${esc(s.title)}</span>` : ''; }).join('');
+    return `<div class="card">
+      <div class="card-top">
+        <div style="flex:1">
+          <h3 class="card-title" style="cursor:pointer" onclick="viewChoreo('${c.id}')">${esc(c.title)}${c.ongoing ? ' <span style="font-size:0.7rem;background:#c9a96e33;color:#c9a96e;border:1px solid #c9a96e44;border-radius:20px;padding:1px 8px;vertical-align:middle">🔥 ON GOING</span>' : ''}</h3>
+          ${c.music ? `<p class="card-date">🎵 ${esc(c.music)}</p>` : ''}
+          ${c.className ? `<p class="card-date">🏫 ${esc(c.className)}</p>` : ''}
+          ${c.date ? `<p class="card-date">📅 ${c.date}</p>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editChoreo('${c.id}')">✏️</button>
+          <button class="icon-btn" onclick="deleteChoreo('${c.id}')">🗑️</button>
+        </div>
+      </div>
+      ${stageTags ? `<div class="stage-tags">${stageTags}</div>` : ''}
+      ${c.steps ? `<pre class="steps-text">${esc(c.steps)}</pre>` : ''}
+      ${(c.formation || (c.formationPhotos && c.formationPhotos.length)) ? `<div style="margin-top:8px"><p style="font-size:0.75rem;color:#c9a96e;margin-bottom:4px">🗺️ フォーメーション</p>${c.formation ? `<pre class="steps-text">${esc(c.formation)}</pre>` : ''}${(c.formationPhotos||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${(c.formationPhotos||[]).map(src => `<img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #3a2510;cursor:pointer" onclick="openFormationPhoto(this.src)">`).join('')}</div>` : ''}</div>` : ''}
+      ${c.notes ? `<p class="card-notes">${esc(c.notes)}</p>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ---- LESSONS ----
+function resetLessonForm() {
+  ['l-date','l-cls','l-techniques','l-feedback','l-selfnote'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('l-editing').value = '';
+  document.querySelector('#lesson-form .form-title').textContent = '📖 新しいレッスンメモ';
+  document.querySelector('#lesson-form .save-btn').textContent = '保存';
+}
+
+function saveLesson() {
+  const date = document.getElementById('l-date').value;
+  if (!date) { alert('日付は必須です'); return; }
+  const lessons = load(KEYS.lessons);
+  const editingId = document.getElementById('l-editing').value;
+  const item = { id: editingId || uid(), date, cls: document.getElementById('l-cls').value, techniques: document.getElementById('l-techniques').value, feedback: document.getElementById('l-feedback').value, selfnote: document.getElementById('l-selfnote').value };
+  if (editingId) { const i = lessons.findIndex(l => l.id === editingId); if (i > -1) lessons[i] = item; }
+  else lessons.unshift(item);
+  save(KEYS.lessons, lessons);
+  document.getElementById('lesson-form').classList.add('hidden');
+  resetLessonForm();
+  renderLessons();
+}
+
+function editLesson(id) {
+  const l = load(KEYS.lessons).find(x => x.id === id); if (!l) return;
+  document.getElementById('l-date').value = l.date;
+  document.getElementById('l-cls').value = l.cls || '';
+  document.getElementById('l-techniques').value = l.techniques || '';
+  document.getElementById('l-feedback').value = l.feedback || '';
+  document.getElementById('l-selfnote').value = l.selfnote || '';
+  document.getElementById('l-editing').value = id;
+  document.querySelector('#lesson-form .form-title').textContent = '✏️ 編集';
+  document.querySelector('#lesson-form .save-btn').textContent = '更新';
+  document.getElementById('lesson-form').classList.remove('hidden');
+  document.getElementById('lesson-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteLesson(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.lessons, load(KEYS.lessons).filter(l => l.id !== id));
+  renderLessons();
+}
+
+function highlight(text, query) {
+  if (!query || !text) return esc(text);
+  const lower = text.toLowerCase(), q = query.toLowerCase();
+  let result = '', i = 0;
+  while (i < text.length) {
+    const idx = lower.indexOf(q, i);
+    if (idx === -1) { result += esc(text.slice(i)); break; }
+    result += esc(text.slice(i, idx)) + '<mark>' + esc(text.slice(idx, idx+query.length)) + '</mark>';
+    i = idx + query.length;
+  }
+  return result;
+}
+
+function renderLessons() {
+  const search = document.getElementById('l-search').value;
+  const lessons = load(KEYS.lessons)
+    .filter(l => !search || (l.techniques||'').toLowerCase().includes(search.toLowerCase()) || (l.feedback||'').toLowerCase().includes(search.toLowerCase()) || (l.selfnote||'').toLowerCase().includes(search.toLowerCase()) || (l.cls||'').includes(search))
+    .sort((a,b) => new Date(b.date)-new Date(a.date));
+  const label = document.getElementById('search-result-label');
+  label.style.display = search ? 'block' : 'none';
+  if (search) label.textContent = `「${search}」の検索結果: ${lessons.length}件`;
+  const el = document.getElementById('lesson-cards');
+  if (!lessons.length) { el.innerHTML = '<div class="empty">レッスンメモがありません</div>'; return; }
+  el.innerHTML = lessons.map(l => {
+    const techs = l.techniques ? l.techniques.split(',').map(t => `<span class="tag" style="background:#c9a96e22;color:#c9a96e;border:1px solid #c9a96e44">${highlight(t.trim(),search)}</span>`).join('') : '';
+    return `<div class="card">
+      <div class="card-top">
+        <div style="flex:1">
+          <h3 class="card-title">📅 ${l.date}${l.cls?` <span style="color:#a07850;font-size:0.85em">— ${esc(l.cls)}</span>`:''}</h3>
+          ${techs ? `<div style="margin-top:6px">${techs}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editLesson('${l.id}')">✏️</button>
+          <button class="icon-btn" onclick="deleteLesson('${l.id}')">🗑️</button>
+        </div>
+      </div>
+      ${l.feedback ? `<p class="feedback-label">🎤 先生から</p><p class="card-notes">${highlight(l.feedback,search)}</p>` : ''}
+      ${l.selfnote ? `<p class="selfnote-label">💭 自分の気づき</p><p class="card-notes" style="color:#a090c0">${highlight(l.selfnote,search)}</p>` : ''}
+    </div>`;
+  }).join('');
+}
+
+
+// ---- PRACTICE ----
+function resetPracticeForm() {
+  ['p-place','p-date','p-time','p-fee'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-account').value = '';
+  document.getElementById('p-status').value = '予定';
+  document.getElementById('p-editing').value = '';
+  document.querySelector('#practice-form .form-title').textContent = '🏠 新しい練習場所';
+  document.querySelector('#practice-form .save-btn').textContent = '保存';
+}
+
+function savePractice() {
+  const place = document.getElementById('p-place').value.trim();
+  const date = document.getElementById('p-date').value;
+  if (!place || !date) { alert('練習場所と日付は必須です'); return; }
+  const practices = load(KEYS.practice);
+  const editingId = document.getElementById('p-editing').value;
+  const existing = editingId ? practices.find(p => p.id === editingId) : null;
+  const item = {
+    id: editingId || uid(),
+    place, date,
+    time: document.getElementById('p-time').value,
+    account: document.getElementById('p-account').value,
+    fee: document.getElementById('p-fee').value,
+    status: document.getElementById('p-status').value,
+    paid: existing ? existing.paid : false
+  };
+  if (editingId) { const i = practices.findIndex(p => p.id === editingId); if (i > -1) practices[i] = item; }
+  else practices.unshift(item);
+  save(KEYS.practice, practices);
+  document.getElementById('practice-form').classList.add('hidden');
+  resetPracticeForm();
+  renderPractice();
+}
+
+function editPractice(id) {
+  const p = load(KEYS.practice).find(x => x.id === id); if (!p) return;
+  document.getElementById('p-place').value = p.place;
+  document.getElementById('p-date').value = p.date;
+  document.getElementById('p-time').value = p.time || '';
+  document.getElementById('p-account').value = p.account || '';
+  document.getElementById('p-fee').value = p.fee || '';
+  document.getElementById('p-status').value = p.status || '予定';
+  document.getElementById('p-editing').value = id;
+  document.querySelector('#practice-form .form-title').textContent = '✏️ 編集';
+  document.querySelector('#practice-form .save-btn').textContent = '更新';
+  document.getElementById('practice-form').classList.remove('hidden');
+  document.getElementById('practice-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deletePractice(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.practice, load(KEYS.practice).filter(p => p.id !== id));
+  renderPractice();
+}
+
+function togglePracticePaid(id) {
+  const practices = load(KEYS.practice);
+  const i = practices.findIndex(p => p.id === id);
+  if (i > -1) { practices[i].paid = !practices[i].paid; save(KEYS.practice, practices); renderPractice(); }
+}
+
+function setPracticeFilter(f) {
+  practiceFilter = f;
+  const colors = { '予定': '#c9a96e', '完了': '#7eb87e', 'キャンセル': '#c97070' };
+  document.querySelectorAll('#practice-filters .filter-btn').forEach(b => {
+    const active = b.textContent === f;
+    b.classList.toggle('active', active);
+    b.style.background = active ? (colors[f] || '#c9a96e') : '';
+    b.style.color = active ? '#1a0e05' : '';
+  });
+  renderPractice();
+}
+
+function renderPractice() {
+  const allPractices = load(KEYS.practice).sort((a,b) => new Date(b.date)-new Date(a.date));
+  const practices = practiceFilter === '全て' ? allPractices : allPractices.filter(p => p.status === practiceFilter);
+  const statusColors = { '予定': '#c9a96e', '完了': '#7eb87e', 'キャンセル': '#c97070' };
+  const totalFee = allPractices.filter(p => p.status !== 'キャンセル').reduce((s,p) => s + (parseInt(p.fee)||0), 0);
+  const unpaid = allPractices.filter(p => !p.paid && p.status !== 'キャンセル').reduce((s,p) => s + (parseInt(p.fee)||0), 0);
+  const summary = document.getElementById('practice-summary-inline');
+  if (practices.length) summary.textContent = `合計: ¥${totalFee.toLocaleString()} / 未払い: ¥${unpaid.toLocaleString()}`;
+  const el = document.getElementById('practice-cards');
+  if (!practices.length) { el.innerHTML = '<div class="empty">練習場所の記録がありません</div>'; return; }
+  el.innerHTML = practices.map(p => `
+    <div class="card" style="border-color:${p.paid?'#3a5a2a':'#2a1a08'}">
+      <div class="card-top">
+        <div style="flex:1">
+          <span class="badge" style="background:${statusColors[p.status]||'#c9a96e'};color:#1a0e05">${p.status}</span>
+          <h3 class="card-title">${esc(p.place)}</h3>
+          <p class="card-date">📅 ${p.date}${p.time ? ' ⏰ ' + esc(p.time) : ''}</p>
+          ${p.account ? `<p class="card-date">👤 ${esc(p.account)}</p>` : ''}
+          ${p.fee ? `<p class="card-date">💴 ¥${parseInt(p.fee).toLocaleString()}</p>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editPractice('${p.id}')">✏️</button>
+          <button class="icon-btn" onclick="deletePractice('${p.id}')">🗑️</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <button class="check-btn" style="background:${p.paid?'#2a4a1a':'#1a1008'};border-color:${p.paid?'#7eb87e':'#3a2510'};color:${p.paid?'#7eb87e':'#7a5835'}" onclick="togglePracticePaid('${p.id}')">
+          ${p.paid?'✅':'☐'} 支払い完了
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+// ---- FLYER PREVIEW ----
+function previewFlyer(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    window._pendingFlyer = e.target.result;
+    document.getElementById('s-flyer-preview').innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:4px">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function compressImage(dataUrl, callback) {
+  var img = new Image();
+  img.onload = function() {
+    var MAX = 1200; // 長辺の最大px
+    var w = img.width, h = img.height;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+      else       { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL('image/jpeg', 0.75)); // 品質75%
+  };
+  img.src = dataUrl;
+}
+
+function addFormationPhotos(event) {
+  if (!Array.isArray(window._pendingFormationPhotos)) window._pendingFormationPhotos = [];
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  let loaded = 0;
+  files.forEach(function(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      compressImage(e.target.result, function(compressed) {
+        window._pendingFormationPhotos.push(compressed);
+        loaded++;
+        if (loaded === files.length) renderFormationPhotoPreview();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function renderFormationPhotoPreview() {
+  const photos = window._pendingFormationPhotos || [];
+  const el = document.getElementById('ch-formation-photo-preview');
+  if (!el) return;
+  let html = '';
+  photos.forEach(function(src, i) {
+    html += '<div style="position:relative;width:72px;height:72px;flex-shrink:0">';
+    // サムネイルをタップで拡大（_pendingからsrcを直接使う）
+    html += '<img src="' + src + '" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #3a2510;cursor:pointer" onclick="showFormationPhotoFromPending(' + i + ')">';
+    html += '<button onclick="removeFormationPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#c97070;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:#fff;font-size:0.7rem;line-height:20px;padding:0">✕</button>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function removeFormationPhoto(i) {
+  if (Array.isArray(window._pendingFormationPhotos)) {
+    window._pendingFormationPhotos.splice(i, 1);
+    renderFormationPhotoPreview();
+  }
+}
+
+// フォーム編集中の写真を拡大（_pendingFormationPhotosから直接）
+function showFormationPhotoFromPending(i) {
+  var photos = window._pendingFormationPhotos || [];
+  if (!photos[i]) return;
+  document.getElementById('formation-photo-modal-src').src = photos[i];
+  document.getElementById('formation-photo-modal').style.display = 'flex';
+}
+
+// 保存済みカードの写真を拡大（srcを直接渡す）
+function openFormationPhoto(src) {
+  if (!src) return;
+  document.getElementById('formation-photo-modal-src').src = src;
+  document.getElementById('formation-photo-modal').style.display = 'flex';
+}
+
+
+// ---- SCHEDULE (PDF) ----
+function addSchedulePDFs(event) {
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  const schedules = load(KEYS.schedule);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      schedules.unshift({ id: uid(), name: file.name, data: e.target.result, addedAt: new Date().toISOString() });
+      loaded++;
+      if (loaded === files.length) {
+        save(KEYS.schedule, schedules);
+        renderSchedule();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function deleteSchedule(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.schedule, load(KEYS.schedule).filter(s => s.id !== id));
+  renderSchedule();
+}
+
+function renderSchedule() {
+  const schedules = load(KEYS.schedule);
+  const el = document.getElementById('schedule-cards');
+  if (!schedules.length) { el.innerHTML = '<div class="empty">PDFがありません<br><small style="font-size:0.78rem">右上の「+ PDF追加」から追加してください</small></div>'; return; }
+  el.innerHTML = schedules.map(s => {
+    const date = s.addedAt ? new Date(s.addedAt).toLocaleDateString('ja-JP') : '';
+    return `<div class="card">
+      <div class="card-top">
+        <div style="flex:1">
+          <h3 class="card-title">🗓️ ${esc(s.name)}</h3>
+          ${date ? `<p class="card-date">追加日: ${date}</p>` : ''}
+        </div>
+        <div class="card-actions">
+          <a href="${s.data}" download="${esc(s.name)}" class="icon-btn" title="ダウンロード" style="text-decoration:none;opacity:0.7">⬇️</a>
+          <button class="icon-btn" onclick="deleteSchedule('${s.id}')">🗑️</button>
+        </div>
+      </div>
+      <img src="${s.data}" style="width:100%;border-radius:8px;margin-top:4px;cursor:pointer" onclick="openImageModal('${s.id}')" title="タップで拡大">
+    </div>`;
+  }).join('');
+}
+
+function openImageModal(id) {
+  const s = load(KEYS.schedule).find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('img-modal-src').src = s.data;
+  const modal = document.getElementById('img-modal');
+  modal.style.display = 'flex';
+}
+function closeImageModal() {
+  document.getElementById('img-modal').style.display = 'none';
+}
+
+
+// ---- DASHBOARD ----
+function renderDashboard() {
+  const stages = load(KEYS.stages);
+  const practices = load(KEYS.practice);
+  const customers = load(KEYS.customers);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const upcomingStages = stages.filter(s => s.status === '予定' && new Date(s.date) >= today).sort((a,b) => new Date(a.date)-new Date(b.date));
+  const upcomingPractices = practices.filter(p => p.status === '予定' && new Date(p.date) >= today).sort((a,b) => new Date(a.date)-new Date(b.date));
+  const unpaidFee = practices.filter(p => !p.paid && p.status !== 'キャンセル').reduce((s,p) => s+(parseInt(p.fee)||0), 0);
+  const pendingReminder = customers.filter(c => !c.reminderSent);
+  const pendingThanks = customers.filter(c => !c.thanksSent);
+
+  const dayDiff = d => Math.ceil((new Date(d)-today)/(1000*60*60*24));
+  const fmtDate = d => { const dt = new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}(${['日','月','火','水','木','金','土'][dt.getDay()]})`; };
+
+  let html = '';
+
+  // Stats grid
+  html += `<div class="dash-grid">
+    <div class="dash-card">
+      <div class="dash-card-title">🎭 直近のステージ</div>
+      <div class="dash-card-value">${upcomingStages.length}</div>
+      <div class="dash-card-sub">${upcomingStages[0] ? '次: ' + fmtDate(upcomingStages[0].date) + ' ' + upcomingStages[0].title : '予定なし'}</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-title">🏠 直近の練習</div>
+      <div class="dash-card-value">${upcomingPractices.length}</div>
+      <div class="dash-card-sub">${upcomingPractices[0] ? '次: ' + fmtDate(upcomingPractices[0].date) + ' ' + upcomingPractices[0].place : '予定なし'}</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-title">💴 未払い練習代</div>
+      <div class="dash-card-value" style="font-size:1.3rem">¥${unpaidFee.toLocaleString()}</div>
+      <div class="dash-card-sub">${practices.filter(p=>!p.paid&&p.status!=='キャンセル').length}件</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-title">📩 連絡待ち</div>
+      <div class="dash-card-value">${pendingReminder.length + pendingThanks.length}</div>
+      <div class="dash-card-sub">リマインド${pendingReminder.length}人 / お礼${pendingThanks.length}人</div>
+    </div>
+  </div>`;
+
+  // Upcoming stages
+  if (upcomingStages.length) {
+    html += `<div class="dash-section-title">📅 直近のステージ</div>`;
+    upcomingStages.slice(0,3).forEach(s => {
+      const d = dayDiff(s.date);
+      const urgency = d <= 3 ? '#c97070' : d <= 7 ? '#c9a96e' : '#7a5835';
+      html += `<div class="dash-item" onclick="switchTabById('stages')">
+        <div class="dash-item-left">
+          <div class="dash-item-title">${esc(s.title)}</div>
+          <div class="dash-item-sub">${fmtDate(s.date)}${s.venue ? ' · ' + esc(s.venue) : ''}</div>
+        </div>
+        <span class="dash-item-badge" style="background:${urgency}22;color:${urgency};border:1px solid ${urgency}44">${d === 0 ? '今日！' : d + '日後'}</span>
+      </div>`;
+    });
+  }
+
+  // Upcoming practices
+  if (upcomingPractices.length) {
+    html += `<div class="dash-section-title">🏠 直近の練習</div>`;
+    upcomingPractices.slice(0,3).forEach(p => {
+      const d = dayDiff(p.date);
+      html += `<div class="dash-item" onclick="switchTabById('practice')">
+        <div class="dash-item-left">
+          <div class="dash-item-title">${esc(p.place)}</div>
+          <div class="dash-item-sub">${fmtDate(p.date)}${p.time ? ' ' + esc(p.time) : ''}${p.fee ? ' · ¥' + parseInt(p.fee).toLocaleString() : ''}</div>
+        </div>
+        <span class="dash-item-badge" style="background:#c9a96e22;color:#c9a96e;border:1px solid #c9a96e44">${d === 0 ? '今日！' : d + '日後'}</span>
+      </div>`;
+    });
+  }
+
+  // Pending contacts
+  if (pendingReminder.length || pendingThanks.length) {
+    html += `<div class="dash-section-title">📩 連絡が必要なお客様</div>`;
+    [...pendingReminder.map(c => ({...c, _type: 'reminder'})), ...pendingThanks.map(c => ({...c, _type: 'thanks'}))]
+      .slice(0, 5).forEach(c => {
+        html += `<div class="dash-item" onclick="switchTabById('customers')">
+          <div class="dash-item-left">
+            <div class="dash-item-title">${esc(c.name)}</div>
+            <div class="dash-item-sub">${c._type === 'reminder' ? '前日リマインド未送信' : '当日お礼未送信'}</div>
+          </div>
+          <span class="dash-item-badge" style="background:#c9706022;color:#c97060;border:1px solid #c9706044">${c._type === 'reminder' ? '📩 リマインド' : '💛 お礼'}</span>
+        </div>`;
+      });
+  }
+
+  if (!upcomingStages.length && !upcomingPractices.length && !pendingReminder.length && !pendingThanks.length) {
+    html += `<div style="text-align:center;padding:40px 20px;color:#5a3820">✨ 今は予定や連絡待ちはありません<br><small style="font-size:0.8rem">各タブからデータを追加すると<br>ここに表示されます</small></div>`;
+  }
+
+  const el = document.getElementById('dashboard-content');
+  if (el) el.innerHTML = html;
+}
+
+function switchTabById(id) {
+  const btn = document.querySelector(`.tab-btn[onclick*="'${id}'"]`);
+  if (btn) { btn.click(); }
+}
+
+// ---- TEMPLATES ----
+function toggleTemplateForm() {
+  const form = document.getElementById('template-form');
+  const btn = document.getElementById('template-add-btn');
+  const isHidden = form.classList.contains('hidden');
+  form.classList.toggle('hidden');
+  btn.textContent = isHidden ? '✕ 閉じる' : '+ 追加';
+  if (!isHidden) resetTemplateForm();
+}
+
+function resetTemplateForm() {
+  ['t-title','t-body','t-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('t-category').value = '';
+  document.getElementById('t-editing').value = '';
+  document.querySelector('#template-form .form-title').textContent = '💬 新しいテンプレート';
+  document.querySelector('#template-form .save-btn').textContent = '保存';
+}
+
+function saveTemplate() {
+  const title = document.getElementById('t-title').value.trim();
+  const body = document.getElementById('t-body').value.trim();
+  if (!title || !body) { alert('タイトルと本文は必須です'); return; }
+  const templates = load(KEYS.templates);
+  const editingId = document.getElementById('t-editing').value;
+  const item = { id: editingId || uid(), title, body, category: document.getElementById('t-category').value, notes: document.getElementById('t-notes').value };
+  if (editingId) { const i = templates.findIndex(t => t.id === editingId); if (i > -1) templates[i] = item; }
+  else templates.unshift(item);
+  save(KEYS.templates, templates);
+  document.getElementById('template-form').classList.add('hidden');
+  resetTemplateForm();
+  renderTemplates();
+}
+
+function editTemplate(id) {
+  const t = load(KEYS.templates).find(x => x.id === id); if (!t) return;
+  document.getElementById('t-title').value = t.title;
+  document.getElementById('t-body').value = t.body;
+  document.getElementById('t-category').value = t.category || '';
+  document.getElementById('t-notes').value = t.notes || '';
+  document.getElementById('t-editing').value = id;
+  document.querySelector('#template-form .form-title').textContent = '✏️ 編集';
+  document.querySelector('#template-form .save-btn').textContent = '更新';
+  document.getElementById('template-form').classList.remove('hidden');
+  document.getElementById('template-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteTemplate(id) {
+  if (!confirm('削除しますか？')) return;
+  save(KEYS.templates, load(KEYS.templates).filter(t => t.id !== id));
+  renderTemplates();
+}
+
+function copyTemplate(id) {
+  const t = load(KEYS.templates).find(x => x.id === id); if (!t) return;
+  navigator.clipboard.writeText(t.body).then(() => {
+    const btn = document.querySelector(`[data-copy-id="${id}"]`);
+    if (btn) { btn.textContent = '✅ コピー済'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '📋 コピー'; btn.classList.remove('copied'); }, 2000); }
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = t.body; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    const btn = document.querySelector(`[data-copy-id="${id}"]`);
+    if (btn) { btn.textContent = '✅ コピー済'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '📋 コピー'; btn.classList.remove('copied'); }, 2000); }
+  });
+}
+
+function renderTemplates() {
+  const templates = load(KEYS.templates);
+  const el = document.getElementById('template-cards');
+  const catColors = { '前日リマインド': '#7eb8c9', '当日お礼': '#c9a96e', '告知': '#9b7ec9', 'その他': '#7a5835' };
+  if (!templates.length) { el.innerHTML = '<div class="empty">テンプレートがありません<br><small style="font-size:0.78rem">よく使うメッセージを登録しておきましょう</small></div>'; return; }
+  el.innerHTML = templates.map(t => `
+    <div class="card">
+      <div class="card-top">
+        <div style="flex:1">
+          ${t.category ? `<span class="badge" style="background:${catColors[t.category]||'#3a2510'}33;color:${catColors[t.category]||'#a07850'};border:1px solid ${catColors[t.category]||'#3a2510'}44">${t.category}</span>` : ''}
+          <h3 class="card-title">${esc(t.title)}</h3>
+          ${t.notes ? `<p class="card-date">${esc(t.notes)}</p>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editTemplate('${t.id}')">✏️</button>
+          <button class="icon-btn" onclick="deleteTemplate('${t.id}')">🗑️</button>
+        </div>
+      </div>
+      <pre style="font-family:inherit;font-size:0.85rem;color:#9a7850;line-height:1.6;white-space:pre-wrap;background:#0f0906;border:1px solid #2a1508;border-radius:8px;padding:12px;margin:8px 0">${esc(t.body)}</pre>
+      <div style="text-align:right">
+        <button class="copy-btn" data-copy-id="${t.id}" onclick="copyTemplate('${t.id}')">📋 コピー</button>
+      </div>
+    </div>`).join('');
+}
+
+// ---- EXPORT / IMPORT ----
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    stages: load(KEYS.stages),
+    customers: load(KEYS.customers),
+    choreo: load(KEYS.choreo),
+    lessons: load(KEYS.lessons),
+    practice: load(KEYS.practice),
+    schedule: load(KEYS.schedule),
+    templates: load(KEYS.templates)
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bellydance-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('invalid');
+      if (!confirm('既存のデータを上書きしてインポートしますか？\n（この操作は元に戻せません）')) return;
+      if (data.stages) save(KEYS.stages, data.stages);
+      if (data.customers) save(KEYS.customers, data.customers);
+      if (data.choreo) save(KEYS.choreo, data.choreo);
+      if (data.lessons) save(KEYS.lessons, data.lessons);
+      if (data.practice) save(KEYS.practice, data.practice);
+      if (data.schedule) save(KEYS.schedule, data.schedule);
+      if (data.templates) save(KEYS.templates, data.templates);
+      renderStages();
+      alert('✅ インポートが完了しました！');
+    } catch {
+      alert('❌ ファイルの読み込みに失敗しました。正しいバックアップファイルを選んでください。');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderDashboard();
+});
+if (document.readyState !== 'loading') renderDashboard();
+</script>
+
+</body>
+</html>
