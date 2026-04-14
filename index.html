@@ -300,6 +300,15 @@
   </div>
 
 
+  <div id="tab-packing" class="section">
+    <div class="section-header">
+      <h2 style="color:#c9a96e;font-size:0.95rem;font-weight:500">🎒 持ち物リスト</h2>
+      <button class="add-btn" onclick="createPackingList()">+ 作成</button>
+    </div>
+    <div id="packing-list-tabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+    <div id="packing-list-view"></div>
+  </div>
+
 <!-- CHOREO VIEW MODAL -->
 <div id="choreo-view-modal" onclick="if(event.target===this)closeChoreoView()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000cc;z-index:9999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:#160b03;border:1px solid #3a2510;border-radius:16px;width:100%;max-width:600px;padding:20px;margin-top:40px">
