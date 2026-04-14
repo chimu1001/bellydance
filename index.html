@@ -109,6 +109,7 @@
     <button class="tab-btn" onclick="switchTab('practice', this)">🏠 練習場所</button>
     <button class="tab-btn" onclick="switchTab('schedule', this)">📋 レッスン予定</button>
     <button class="tab-btn" onclick="switchTab('templates', this)">💬 テンプレ</button>
+    <button class="tab-btn" onclick="switchTab('packing', this)">🎒 持ち物</button>
   </div><!-- DASHBOARD -->
   <div id="tab-dashboard" class="section active">
     <div id="dashboard-content"></div>
@@ -323,7 +324,7 @@
 </div>
 
 <script>
-const KEYS = { stages: 'bd_stages', customers: 'bd_customers', choreo: 'bd_choreography', lessons: 'bd_lessons', practice: 'bd_practice', schedule: 'bd_schedule', templates: 'bd_templates' };
+const KEYS = { stages: 'bd_stages', customers: 'bd_customers', choreo: 'bd_choreography', lessons: 'bd_lessons', practice: 'bd_practice', schedule: 'bd_schedule', templates: 'bd_templates', packing: 'bd_packing' };
 const load = k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
 const save = (k, d) => localStorage.setItem(k, JSON.stringify(d));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -345,6 +346,7 @@ function switchTab(id, btn) {
   if (id === 'practice') renderPractice();
   if (id === 'schedule') renderSchedule();
   if (id === 'templates') renderTemplates();
+  if (id === 'packing') renderPackingTab();
   if (id === 'dashboard') renderDashboard();
 }
 
@@ -1257,6 +1259,201 @@ function copyTemplate(id) {
     if (btn) { btn.textContent = '✅ コピー済'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '📋 コピー'; btn.classList.remove('copied'); }, 2000); }
   });
 }
+
+// ---- PACKING LIST ----
+var DEFAULT_PACKING_ITEMS = [
+  '衣装','イヤリング','ネックレス','ハンドアクセサリー','ストロー',
+  'ガラベーヤ','スリッパ','予備スパッツ','小物用箱','ハンディファン',
+  '三脚','鏡','メイクポーチ','つけまつげ','コテ','色々ポーチ'
+];
+var currentPackingListId = 'default';
+
+function loadPackingLists() {
+  var lists = load(KEYS.packing);
+  // defaultリストが無ければ作る
+  if (!lists.find(function(l){return l.id==='default';})) {
+    lists.unshift({
+      id: 'default',
+      name: 'デフォルト',
+      stageId: null,
+      items: DEFAULT_PACKING_ITEMS.map(function(name){return {name:name,extra:false};})
+    });
+    save(KEYS.packing, lists);
+  }
+  return lists;
+}
+
+function createPackingList() {
+  var stages = load(KEYS.stages);
+  if (!stages.length) { alert('先にステージを登録してください'); return; }
+  var options = stages.map(function(s){return s.id + '|' + s.title + '（' + s.date + '）';});
+  var promptMsg = 'ステージを選んでください（番号を入力）:\n' + options.map(function(o,i){return (i+1)+'. '+o.split('|')[1];}).join('\n');
+  var chosen = prompt(promptMsg);
+  var idx = parseInt(chosen) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= stages.length) return;
+  var stage = stages[idx];
+  var lists = loadPackingLists();
+  // 同じステージのリストが既にあれば確認
+  if (lists.find(function(l){return l.stageId===stage.id;})) {
+    if (!confirm(stage.title + ' のリストは既にあります。新しく作り直しますか？')) return;
+    lists = lists.filter(function(l){return l.stageId!==stage.id;});
+  }
+  var defaultList = lists.find(function(l){return l.id==='default';});
+  var baseItems = defaultList ? defaultList.items.map(function(it){return {name:it.name,extra:true};}) : DEFAULT_PACKING_ITEMS.map(function(name){return {name:name,extra:true};});
+  lists.push({
+    id: uid(),
+    name: stage.title,
+    stageId: stage.id,
+    items: baseItems
+  });
+  save(KEYS.packing, lists);
+  currentPackingListId = lists[lists.length-1].id;
+  renderPackingTab();
+}
+
+function renderPackingTab() {
+  var lists = loadPackingLists();
+  var list = lists.find(function(l){return l.id===currentPackingListId;}) || lists[0];
+  if (!list) return;
+  if (!window._packingChecked) window._packingChecked = {};
+  if (!window._packingChecked[list.id]) window._packingChecked[list.id] = {};
+
+  // タブボタン
+  var tabsEl = document.getElementById('packing-list-tabs');
+  tabsEl.innerHTML = '';
+  lists.forEach(function(l) {
+    var active = l.id === currentPackingListId;
+    var btn = document.createElement('button');
+    btn.textContent = l.name;
+    btn.style.cssText = 'padding:6px 14px;border-radius:20px;border:1px solid '+(active?'#c9a96e':'#3a2510')+';background:'+(active?'#c9a96e':'#1a0e05')+';color:'+(active?'#1a0e05':'#a07850')+';font-size:0.82rem;cursor:pointer;margin-bottom:4px';
+    (function(lid){ btn.onclick = function(){ currentPackingListId=lid; renderPackingTab(); }; })(l.id);
+    tabsEl.appendChild(btn);
+  });
+
+  // リスト本体
+  var isDefault = list.id === 'default';
+  var view = document.getElementById('packing-list-view');
+  view.innerHTML = '';
+
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.style.cssText = 'padding:0;overflow:hidden';
+
+  // ヘッダー
+  var header = document.createElement('div');
+  header.style.cssText = 'padding:14px 16px;border-bottom:1px solid #2a1508;display:flex;align-items:center;justify-content:space-between';
+  var headerTitle = document.createElement('span');
+  headerTitle.style.cssText = 'color:#c9a96e;font-size:0.85rem';
+  headerTitle.textContent = '🎒 ' + list.name + '（' + list.items.length + 'アイテム）';
+  header.appendChild(headerTitle);
+  if (!isDefault) {
+    var delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️ 削除';
+    delBtn.style.cssText = 'background:none;border:none;color:#c97070;cursor:pointer;font-size:0.82rem';
+    (function(lid){ delBtn.onclick = function(){ deletePackingList(lid); }; })(list.id);
+    header.appendChild(delBtn);
+  }
+  card.appendChild(header);
+
+  // アイテム一覧
+  list.items.forEach(function(item, i) {
+    var checked = !!window._packingChecked[list.id][i];
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #1a0e05;background:'+(checked?'#0d0803':'transparent');
+
+    var checkBtn = document.createElement('button');
+    checkBtn.style.cssText = 'width:24px;height:24px;border-radius:50%;border:2px solid '+(checked?'#7eb87e':'#3a2510')+';background:'+(checked?'#2a4a1a':'transparent')+';cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#7eb87e;font-size:0.8rem';
+    checkBtn.textContent = checked ? '✓' : '';
+    (function(lid,ii){ checkBtn.onclick = function(){ togglePackingCheck(lid,ii); }; })(list.id, i);
+
+    var label = document.createElement('span');
+    label.style.cssText = 'flex:1;font-size:0.9rem;color:'+(checked?'#5a4020':'#c9b090')+';text-decoration:'+(checked?'line-through':'none');
+    label.textContent = item.name;
+
+    var rmBtn = document.createElement('button');
+    rmBtn.textContent = '✕';
+    rmBtn.style.cssText = 'background:none;border:none;color:#3a2510;cursor:pointer;font-size:0.85rem;padding:4px';
+    (function(lid,ii){ rmBtn.onclick = function(){ deletePackingItem(lid,ii); }; })(list.id, i);
+
+    row.appendChild(checkBtn);
+    row.appendChild(label);
+    row.appendChild(rmBtn);
+    card.appendChild(row);
+  });
+
+  // 追加行
+  var addRow = document.createElement('div');
+  addRow.style.cssText = 'padding:10px 16px;display:flex;gap:8px';
+  var input = document.createElement('input');
+  input.id = 'packing-new-item';
+  input.placeholder = 'アイテムを追加...';
+  input.style.cssText = 'flex:1;background:#0f0906;border:1px solid #3a2510;border-radius:8px;padding:8px 12px;color:#c9b090;font-size:0.85rem';
+  (function(lid){ input.onkeydown = function(e){ if(e.key==='Enter') addPackingItem(lid); }; })(list.id);
+  var addBtn = document.createElement('button');
+  addBtn.textContent = '追加';
+  addBtn.style.cssText = 'background:#c9a96e;color:#1a0e05;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.85rem;font-weight:bold';
+  (function(lid){ addBtn.onclick = function(){ addPackingItem(lid); }; })(list.id);
+  addRow.appendChild(input);
+  addRow.appendChild(addBtn);
+  card.appendChild(addRow);
+  view.appendChild(card);
+
+  // チェックリセットボタン
+  var checkedCount = Object.values(window._packingChecked[list.id]||{}).filter(Boolean).length;
+  if (checkedCount > 0) {
+    var resetBtn = document.createElement('button');
+    resetBtn.textContent = '↩️ チェックをすべてリセット';
+    resetBtn.style.cssText = 'margin-top:12px;width:100%;padding:10px;background:none;border:1px solid #3a2510;border-radius:8px;color:#7a5835;font-size:0.82rem;cursor:pointer';
+    (function(lid){ resetBtn.onclick = function(){ resetPackingChecks(lid); }; })(list.id);
+    view.appendChild(resetBtn);
+  }
+}
+
+function togglePackingCheck(listId, idx) {
+  if (!window._packingChecked) window._packingChecked = {};
+  if (!window._packingChecked[listId]) window._packingChecked[listId] = {};
+  window._packingChecked[listId][idx] = !window._packingChecked[listId][idx];
+  renderPackingTab();
+}
+
+function resetPackingChecks(listId) {
+  if (window._packingChecked) window._packingChecked[listId] = {};
+  renderPackingTab();
+}
+
+function addPackingItem(listId) {
+  var input = document.getElementById('packing-new-item');
+  var name = input.value.trim();
+  if (!name) return;
+  var lists = loadPackingLists();
+  var list = lists.find(function(l){return l.id===listId;});
+  if (!list) return;
+  list.items.push({name:name, extra:true});
+  save(KEYS.packing, lists);
+  renderPackingTab();
+}
+
+function deletePackingItem(listId, idx) {
+  var lists = loadPackingLists();
+  var list = lists.find(function(l){return l.id===listId;});
+  if (!list) return;
+  list.items.splice(idx, 1);
+  // チェック状態もずらす
+  if (window._packingChecked && window._packingChecked[listId]) {
+    window._packingChecked[listId] = {};
+  }
+  save(KEYS.packing, lists);
+  renderPackingTab();
+}
+
+function deletePackingList(listId) {
+  if (!confirm('このリストを削除しますか？')) return;
+  var lists = loadPackingLists().filter(function(l){return l.id!==listId;});
+  save(KEYS.packing, lists);
+  currentPackingListId = 'default';
+  renderPackingTab();
+}
+
 
 function renderTemplates() {
   const templates = load(KEYS.templates);
